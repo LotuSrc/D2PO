@@ -585,7 +585,7 @@ def create_custom_scheduler(
 
 
 def get_batch_logps(
-    logits: "torch.Tensor", labels: "torch.Tensor", label_pad_token_id: int = IGNORE_INDEX
+    logits: "torch.Tensor", labels: "torch.Tensor", label_pad_token_id: int = IGNORE_INDEX, gamma: float = 1.0
 ) -> tuple["torch.Tensor", "torch.Tensor"]:
     r"""Compute the log probabilities of the given labels under the given logits.
 
@@ -602,7 +602,7 @@ def get_batch_logps(
     loss_mask = labels != label_pad_token_id
     labels[labels == label_pad_token_id] = 0  # dummy token
     per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
-    return (per_token_logps * loss_mask).sum(-1), loss_mask.sum(-1)
+    return (per_token_logps * torch.pow(gamma, torch.cumsum(loss_mask, dim=1)) * loss_mask).sum(-1), loss_mask.sum(-1)
 
 
 def nested_detach(

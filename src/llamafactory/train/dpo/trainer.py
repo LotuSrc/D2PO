@@ -76,6 +76,7 @@ class CustomDPOTrainer(DPOTrainer):
 
         # dpo hyperparams
         self.beta = finetuning_args.pref_beta
+        self.gamma = finetuning_args.gamma
         self.loss_type = finetuning_args.pref_loss
         self.ftx_gamma = finetuning_args.pref_ftx
         self.label_smoothing = finetuning_args.dpo_label_smoothing
@@ -187,7 +188,7 @@ class CustomDPOTrainer(DPOTrainer):
             batch = nested_detach(batch, clone=True)  # avoid error
 
         all_logits: torch.Tensor = model(**batch, return_dict=True, use_cache=False).logits.to(torch.float32)
-        all_logps, valid_length = get_batch_logps(logits=all_logits, labels=batch["labels"])
+        all_logps, valid_length = get_batch_logps(logits=all_logits, labels=batch["labels"], gamma=self.gamma)
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             all_logps = all_logps / valid_length
 
